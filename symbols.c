@@ -14,6 +14,7 @@
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include "stack.h"
 #include "symbols.h"
 
@@ -69,7 +70,7 @@ int translateFunctionFromSymbol( unsigned int address, char *func )
 {
   FILE *p;
   char line[500];
-  int  len, i;
+  int  i;
 
   sprintf( line, "addr2line -C -e %s -f -s 0x%x", imageName, address );
 
@@ -78,7 +79,7 @@ int translateFunctionFromSymbol( unsigned int address, char *func )
   if (p == NULL) return 0;
   else {
 
-    len = fread( line, 99, 1, p );
+    fread( line, 99, 1, p );
 
     i = 0;
     while ( i < strlen(line) ) {
@@ -94,10 +95,9 @@ int translateFunctionFromSymbol( unsigned int address, char *func )
 
     }
 
-    //func = strtok(func,"(");
-
     int func_len = strlen(func);
 
+    // Double quote string
     for ( int i=func_len; i>=1; i-- ){
        func[i] = func[i-1];
     }
@@ -106,8 +106,26 @@ int translateFunctionFromSymbol( unsigned int address, char *func )
     func[func_len+1] = '"';
     func[func_len+2] = '\0';
 
-    pclose(p);
 
+    // Remove parentheses
+    bool outsideParenthese = true;
+    int j = 0;
+    i = 0;
+
+    while(func[i]){
+
+       if ( func[i] == '(' ) outsideParenthese = false;
+
+       if( func[i] != '(' && func[i] != ')' && outsideParenthese )  func[j++] = func[i];
+
+       i++;
+
+       if (  func[i] == ')' ) outsideParenthese = true;
+    }
+
+    func[j] = '\0';
+
+    pclose(p);
   }
 
   return 1;
