@@ -68,10 +68,10 @@ int lookupSymbol( unsigned int address )
 int translateFunctionFromSymbol( unsigned int address, char *func )
 {
   FILE *p;
-  char line[100];
+  char line[500];
   int  len, i;
 
-  sprintf( line, "addr2line -e %s -f -s 0x%x", imageName, address );
+  sprintf( line, "addr2line -C -e %s -f -s 0x%x", imageName, address );
 
   p = popen( line, "r" );
 
@@ -93,6 +93,18 @@ int translateFunctionFromSymbol( unsigned int address, char *func )
       i++;
 
     }
+
+    //func = strtok(func,"(");
+
+    int func_len = strlen(func);
+
+    for ( int i=func_len; i>=1; i-- ){
+       func[i] = func[i-1];
+    }
+
+    func[0] = '"';
+    func[func_len+1] = '"';
+    func[func_len+2] = '\0';
 
     pclose(p);
 
